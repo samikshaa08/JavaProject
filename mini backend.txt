@@ -1,0 +1,116 @@
+import java.awt.*;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.swing.*;
+
+public class TypingSpeedTest extends JFrame {
+    private JTextArea textToType;
+    private JTextArea userInput;
+    private JLabel timerLabel, resultLabel;
+    private JButton startButton;
+    private Timer timer;
+    private int timeLeft = 30; // 30 seconds test
+    private long startTime;
+
+    private String sampleText = "Java is a powerful programming language used for backend development";
+
+    public TypingSpeedTest() {
+        setTitle("Typing Speed Test ⌨");
+        setSize(600, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10));
+
+        // Top panel with text
+        textToType = new JTextArea(sampleText);
+        textToType.setLineWrap(true);
+        textToType.setWrapStyleWord(true);
+        textToType.setEditable(false);
+        textToType.setFont(new Font("Serif", Font.BOLD, 18));
+        add(new JScrollPane(textToType), BorderLayout.NORTH);
+
+        // User input
+        userInput = new JTextArea();
+        userInput.setLineWrap(true);
+        userInput.setWrapStyleWord(true);
+        userInput.setEnabled(false);
+        userInput.setFont(new Font("Serif", Font.PLAIN, 18));
+        add(new JScrollPane(userInput), BorderLayout.CENTER);
+
+        // Bottom panel
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new GridLayout(3, 1));
+
+        timerLabel = new JLabel("Time Left: 30s", SwingConstants.CENTER);
+        timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        bottomPanel.add(timerLabel);
+
+        resultLabel = new JLabel("Results will appear here.", SwingConstants.CENTER);
+        resultLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        bottomPanel.add(resultLabel);
+
+        startButton = new JButton("Start Test");
+        bottomPanel.add(startButton);
+
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        // Start button action
+        startButton.addActionListener(e -> startTest());
+    }
+
+    private void startTest() {
+        userInput.setText("");
+        userInput.setEnabled(true);
+        userInput.requestFocus();
+        timeLeft = 30;
+        timerLabel.setText("Time Left: 30s");
+        resultLabel.setText("Typing...");
+        startTime = System.currentTimeMillis();
+
+        if (timer != null) {
+            timer.cancel();
+        }
+
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    timeLeft--;
+                    timerLabel.setText("Time Left: " + timeLeft + "s");
+                    if (timeLeft <= 0) {
+                        timer.cancel();
+                        endTest();
+                    }
+                });
+            }
+        }, 1000, 1000);
+    }
+
+    private void endTest() {
+        userInput.setEnabled(false);
+        String typed = userInput.getText();
+        long endTime = System.currentTimeMillis();
+        double timeTaken = (endTime - startTime) / 1000.0; // in seconds
+
+        int typedChars = typed.length();
+        double words = (double) typedChars / 5;
+        double minutes = timeTaken / 60.0;
+        int wpm = (int) (words / minutes);
+
+        int correctChars = 0;
+        for (int i = 0; i < Math.min(sampleText.length(), typed.length()); i++) {
+            if (sampleText.charAt(i) == typed.charAt(i)) {
+                correctChars++;
+            }
+        }
+        double accuracy = (typedChars > 0) ? ((double) correctChars / typedChars) * 100 : 0;
+
+        resultLabel.setText("WPM: " + wpm + " | Accuracy: " + String.format("%.2f", accuracy) + "%");
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            TypingSpeedTest frame = new TypingSpeedTest();
+            frame.setVisible(true);
+        });
+    }
+}
